@@ -16,8 +16,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'description', 'price',
-            'category', 'subcategory', 'sizes',
-            'date', 'bestseller', 'images', 'image_files'
+            'category', 'subcategory', 'sizes', 'bestseller', 'images', 'image_files'
         ]
 
     def create(self, validated_data):

@@ -1,34 +1,15 @@
-from rest_framework import generics
-from .models import User,Movie
-from .serializers import UserSerializer, MovieSerializer
-from rest_framework.permissions import AllowAny
-from .serializers import CustomTokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
-from .permissions import IsManagerOrReadOnly
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .models import CustomUser
 
-
-
-class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [AllowAny]
-
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
-
-# List all movies and allow managers to create
-class MovieListCreateView(generics.ListCreateAPIView):
-    queryset = Movie.objects.all()
-    serializer_class = MovieSerializer
-    permission_classes = [IsManagerOrReadOnly]
-    parser_classes = [MultiPartParser, FormParser]
-
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-# Retrieve, update, or delete a specific movie
-class MovieDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Movie.objects.all()
-    serializer_class = MovieSerializer
-    permission_classes = [IsManagerOrReadOnly]
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_details(request):
+    user = CustomUser.objects.get(id=request.user.id)
+    # Assuming 'role' is a field on your CustomUser model
+    return Response({
+        'username': user.username,
+        'email': user.email,
+        'role': user.role,
+    })

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User
+from .models import CustomUser as User
 
 @admin.action(description="Make selected users Clients")
 def make_client(modeladmin, request, queryset):

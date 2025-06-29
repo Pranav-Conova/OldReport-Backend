@@ -27,7 +27,6 @@ class Product(models.Model):
     subcategory = models.CharField(max_length=20, choices=SUBCATEGORY_CHOICES)
 
     sizes = models.JSONField(default=list)  # list of sizes like ["M", "L"]
-    date = models.DateTimeField()
     bestseller = models.BooleanField(default=False)
 
     def __str__(self):

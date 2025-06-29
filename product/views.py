@@ -6,10 +6,10 @@ from api import permissions
 class ProductListCreateView(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsManagerOrReadOnly]
+    # permission_classes = [permissions.IsManagerOrReadOnly]
 
 
 class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsManagerOrReadOnly]
+    # permission_classes = [permissions.IsManagerOrReadOnly]
