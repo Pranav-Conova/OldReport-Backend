@@ -14,6 +14,13 @@ class ProductListCreateView(APIView):
     
 
     def post(self, request):
+        data = request.data.copy()
+        stock_details = data.get('stock_details')
+        if isinstance(stock_details, str):
+            try:
+                data['stock_details'] = json.loads(stock_details)
+            except Exception:
+                return Response({"stock_details": "Invalid JSON."}, status=status.HTTP_400_BAD_REQUEST)
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
