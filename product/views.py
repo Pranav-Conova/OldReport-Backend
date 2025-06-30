@@ -4,6 +4,8 @@ from rest_framework import status
 from .models import Product
 from .serializers import ProductSerializer
 from api.permissions import IsManagerOrReadOnly
+import json
+
 
 class ProductListCreateView(APIView):
     # permission_classes = [IsManagerOrReadOnly]
