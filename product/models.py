@@ -12,21 +12,14 @@ class Product(models.Model):
         ('Bottomwear', 'Bottomwear'),
     ]
 
-    SIZE_CHOICES = [
-        ('S', 'Small'),
-        ('M', 'Medium'),
-        ('L', 'Large'),
-        ('XL', 'Extra Large'),
-    ]
 
     name = models.CharField(max_length=255)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    
+
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES)
     subcategory = models.CharField(max_length=20, choices=SUBCATEGORY_CHOICES)
 
-    sizes = models.JSONField(default=list)  # list of sizes like ["M", "L"]
     bestseller = models.BooleanField(default=False)
 
     def __str__(self):
@@ -39,3 +32,22 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.product.name}"
+
+
+class ProductStock(models.Model):
+    SIZE_CHOICES = [
+        ('S', 'Small'),
+        ('M', 'Medium'),
+        ('L', 'Large'),
+        ('XL', 'Extra Large'),
+    ]
+
+    product = models.ForeignKey(Product, related_name='stock_details', on_delete=models.CASCADE)
+    size = models.CharField(max_length=2, choices=SIZE_CHOICES)
+    quantity = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('product', 'size')  # Prevent duplicate entries
+
+    def __str__(self):
+        return f"{self.product.name} - {self.size}: {self.quantity}"

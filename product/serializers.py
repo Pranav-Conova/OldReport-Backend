@@ -1,38 +1,41 @@
 from rest_framework import serializers
-from .models import Product, ProductImage
+from .models import Product, ProductStock, ProductImage
+
+class ProductStockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductStock
+        fields = ['id', 'size', 'quantity']
+
 
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         fields = ['id', 'image']
 
+
 class ProductSerializer(serializers.ModelSerializer):
-    images = ProductImageSerializer(many=True, read_only=True)
-    image_files = serializers.ListField(
-        child=serializers.ImageField(), write_only=True, required=False
-    )
+    stock_details = ProductStockSerializer(many=True)
+    images = ProductImageSerializer(many=True, required=False)
 
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'description', 'price',
-            'category', 'subcategory', 'sizes', 'bestseller', 'images', 'image_files'
+            'id', 'name', 'description', 'price', 'category', 'subcategory',
+            'bestseller', 
+            'stock_details', 'images'
         ]
 
     def create(self, validated_data):
-        image_files = validated_data.pop('image_files', [])
+        stock_data = validated_data.pop('stock_details')
+        image_data = validated_data.pop('images', [])
         product = Product.objects.create(**validated_data)
-        for image in image_files:
-            ProductImage.objects.create(product=product, image=image)
+
+        # Create stock entries
+        for stock in stock_data:
+            ProductStock.objects.create(product=product, **stock)
+
+        # Create image entries
+        for image in image_data:
+            ProductImage.objects.create(product=product, **image)
+
         return product
-
-    def update(self, instance, validated_data):
-        image_files = validated_data.pop('image_files', [])
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-
-        for image in image_files:
-            ProductImage.objects.create(product=instance, image=image)
-
-        return instance
