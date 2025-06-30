@@ -6,7 +6,7 @@ from .serializers import ProductSerializer
 from api.permissions import IsManagerOrReadOnly
 
 class ProductListCreateView(APIView):
-    permission_classes = [IsManagerOrReadOnly]
+    # permission_classes = [IsManagerOrReadOnly]
     def get(self, request):
         products = Product.objects.prefetch_related('stock_details', 'images').all()
         serializer = ProductSerializer(products, many=True)
@@ -21,7 +21,7 @@ class ProductListCreateView(APIView):
 
 
 class ProductDeleteView(APIView):
-    permission_classes = [IsManagerOrReadOnly]
+    # permission_classes = [IsManagerOrReadOnly]
     def delete(self, request, pk):
         try:
             product = Product.objects.get(pk=pk)
