@@ -26,7 +26,7 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        stock_data = validated_data.pop('stock_details')
+        stock_data = validated_data.pop('stock_details',[])
         image_data = validated_data.pop('images', [])
         product = Product.objects.create(**validated_data)
 
