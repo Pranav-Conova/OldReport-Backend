@@ -1,18 +1,19 @@
 import datetime
+from datetime import datetime
+
 import environ
 import jwt
-from jwt import PyJWKClient
 import pytz
 import requests
-from api.models import CustomUser as User
+from django.contrib.auth.models import User
 from django.core.cache import cache
-# from jwt.algorithms import RSAAlgorithm
+from jwt.algorithms import RSAAlgorithm
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 env = environ.Env()
 
-CLERK_API_URL = "https://api.clerk.com/v1"
+CLERK_API_URL = "https://api.clerk.com"
 CLERK_FRONTEND_API_URL = env("CLERK_FRONTEND_API_URL")
 CLERK_SECRET_KEY = env("CLERK_SECRET_KEY")
 CACHE_KEY = "jwks_data"
@@ -43,20 +44,19 @@ class JWTAuthenticationMiddleware(BaseAuthentication):
         return user, None
 
     def decode_jwt(self, token):
-        jwks_url = f"{CLERK_FRONTEND_API_URL}/.well-known/jwks.json"
-        jwk_client = PyJWKClient(jwks_url)
-
+        clerk = ClerkSDK()
+        jwks_data = clerk.get_jwks()
+        public_key = RSAAlgorithm.from_jwk(jwks_data["keys"][0])
         try:
-            signing_key = jwk_client.get_signing_key_from_jwt(token)
             payload = jwt.decode(
                 token,
-                signing_key.key,
+                public_key,
                 algorithms=["RS256"],
                 options={"verify_signature": True},
             )
         except jwt.ExpiredSignatureError:
             raise AuthenticationFailed("Token has expired.")
-        except jwt.DecodeError:
+        except jwt.DecodeError as e:
             raise AuthenticationFailed("Token decode error.")
         except jwt.InvalidTokenError:
             raise AuthenticationFailed("Invalid token.")
