@@ -19,21 +19,21 @@ CLERK_SECRET_KEY = env("CLERK_SECRET_KEY")
 class JWTAuthenticationMiddleware(BaseAuthentication):
     def authenticate(self, request):
         auth_header = request.headers.get("Authorization")
-        if not auth_header:
+        if not auth_header or not auth_header.startswith("Bearer "):
             return None
 
         try:
             token = auth_header.split(" ")[1]
         except IndexError:
-            raise AuthenticationFailed("Bearer token not provided.")
+            raise AuthenticationFailed("Bearer token malformed.")
 
         user = self.decode_jwt(token)
-        clerk = ClerkSDK()
-        info, found = clerk.fetch_user_info(user.username)
 
         if not user:
-            return None
+            raise AuthenticationFailed("User not found.")
 
+        clerk = ClerkSDK()
+        info, found = clerk.fetch_user_info(user.username)
         if found:
             user.email = info["email_address"]
             user.first_name = info["first_name"]
@@ -85,10 +85,4 @@ class ClerkSDK:
                     data["last_sign_in_at"] / 1000, tz=pytz.UTC
                 ),
             }, True
-        else:
-            return {
-                "email_address": "",
-                "first_name": "",
-                "last_name": "",
-                "last_login": None,
-            }, False
+        return {}, False
