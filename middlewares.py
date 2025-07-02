@@ -4,6 +4,10 @@ import jwt
 import pytz
 import requests
 
+from jose import jwt as jose_jwt
+from jose.utils import base64url_decode
+import requests
+
 from jwt import PyJWKClient
 from api.models import CustomUser as User
 from rest_framework.authentication import BaseAuthentication
@@ -19,21 +23,21 @@ CLERK_SECRET_KEY = env("CLERK_SECRET_KEY")
 class JWTAuthenticationMiddleware(BaseAuthentication):
     def authenticate(self, request):
         auth_header = request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
+        if not auth_header:
             return None
 
         try:
             token = auth_header.split(" ")[1]
         except IndexError:
-            raise AuthenticationFailed("Bearer token malformed.")
+            raise AuthenticationFailed("Bearer token not provided.")
 
         user = self.decode_jwt(token)
-
-        if not user:
-            raise AuthenticationFailed("User not found.")
-
         clerk = ClerkSDK()
         info, found = clerk.fetch_user_info(user.username)
+
+        if not user:
+            return None
+
         if found:
             user.email = info["email_address"]
             user.first_name = info["first_name"]
@@ -45,22 +49,19 @@ class JWTAuthenticationMiddleware(BaseAuthentication):
 
     def decode_jwt(self, token):
         jwks_url = f"{CLERK_FRONTEND_API_URL}/.well-known/jwks.json"
-        jwk_client = PyJWKClient(jwks_url)
+        jwks = requests.get(jwks_url).json()
+        header = jose_jwt.get_unverified_header(token)
 
-        try:
-            signing_key = jwk_client.get_signing_key_from_jwt(token)
-            payload = jwt.decode(
-                token,
-                signing_key.key,
-                algorithms=["RS256"],
-                options={"verify_signature": True},
-            )
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed("Token has expired.")
-        except jwt.DecodeError:
-            raise AuthenticationFailed("Token decode error.")
-        except jwt.InvalidTokenError:
-            raise AuthenticationFailed("Invalid token.")
+        key = next((k for k in jwks["keys"] if k["kid"] == header["kid"]), None)
+        if not key:
+            raise AuthenticationFailed("Public key not found.")
+
+        payload = jose_jwt.decode(
+            token,
+            key,
+            algorithms=["RS256"],
+            options={"verify_aud": False},  # Clerk tokens don't include aud by default
+        )
 
         user_id = payload.get("sub")
         if user_id:
@@ -85,4 +86,10 @@ class ClerkSDK:
                     data["last_sign_in_at"] / 1000, tz=pytz.UTC
                 ),
             }, True
-        return {}, False
+        else:
+            return {
+                "email_address": "",
+                "first_name": "",
+                "last_name": "",
+                "last_login": None,
+            }, False
