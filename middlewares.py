@@ -1,7 +1,7 @@
 import datetime
-
 import environ
 import jwt
+from jwt import PyJWKClient
 import pytz
 import requests
 from api.models import CustomUser as User
@@ -43,19 +43,20 @@ class JWTAuthenticationMiddleware(BaseAuthentication):
         return user, None
 
     def decode_jwt(self, token):
-        clerk = ClerkSDK()
-        jwks_data = clerk.get_jwks()
-        public_key = jwt.algorithms.RSAAlgorithm.from_jwk(jwks_data["keys"][0])
+        jwks_url = f"{CLERK_FRONTEND_API_URL}/.well-known/jwks.json"
+        jwk_client = PyJWKClient(jwks_url)
+
         try:
+            signing_key = jwk_client.get_signing_key_from_jwt(token)
             payload = jwt.decode(
                 token,
-                public_key,
+                signing_key.key,
                 algorithms=["RS256"],
                 options={"verify_signature": True},
             )
         except jwt.ExpiredSignatureError:
             raise AuthenticationFailed("Token has expired.")
-        except jwt.DecodeError as e:
+        except jwt.DecodeError:
             raise AuthenticationFailed("Token decode error.")
         except jwt.InvalidTokenError:
             raise AuthenticationFailed("Invalid token.")
