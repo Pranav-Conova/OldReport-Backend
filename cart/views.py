@@ -55,7 +55,7 @@ class CartView(APIView):
 
     def put(self, request):
         cart = self.get_cart(request.user)
-        item_id = request.data.get("item_id")
+        item_id = request.data.get("product_id")
         quantity = int(request.data.get("quantity", 1))
 
         cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
