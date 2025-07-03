@@ -55,10 +55,11 @@ class CartView(APIView):
 
     def put(self, request):
         cart = self.get_cart(request.user)
-        item_id = request.data.get("product_id")
+        size = request.data.get("size")
+        product_id = request.data.get("product_id")
         quantity = int(request.data.get("quantity", 1))
 
-        cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
+        cart_item = get_object_or_404(CartItem, id=product_id, size =size, cart=cart)
         stock = ProductStock.objects.filter(product=cart_item.product_id, size=cart_item.size).first()
 
         if not stock or quantity > stock.quantity:
