@@ -19,13 +19,13 @@ from django.urls import path,include
 from product import urls as product_urls
 from django.conf import settings
 from django.conf.urls.static import static
-from api import urls
+from api import urls as apiUrls
 from cart import urls as carturls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(product_urls)),
-    path('',include(urls)),
+    path('',include(apiUrls)),
     path('api/',include(carturls)),
 ]
 
