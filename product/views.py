@@ -9,7 +9,7 @@ from.models import Product,ProductImage,ProductStock
 
 
 class ProductListCreateView(APIView):
-    # permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [IsManagerOrReadOnly]
     def get(self, request):
         products = Product.objects.prefetch_related('stock_details', 'images').all()
         serializer = ProductSerializer(products, many=True)
@@ -58,7 +58,7 @@ class ProductListCreateView(APIView):
         return Response("error", status=status.HTTP_400_BAD_REQUEST)
 
 class ProductDetailView(APIView):
-    # permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [IsManagerOrReadOnly]
 
     def get(self, request, pk):
         try:
@@ -70,7 +70,7 @@ class ProductDetailView(APIView):
         return Response(serializer.data)
     
 class ProductDeleteView(APIView):
-    # permission_classes = [IsManagerOrReadOnly]
+    permission_classes = [IsManagerOrReadOnly]
     def delete(self, request, pk):
         try:
             product = Product.objects.get(pk=pk)
