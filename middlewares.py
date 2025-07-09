@@ -57,10 +57,11 @@ class JWTAuthenticationMiddleware(BaseAuthentication):
             raise AuthenticationFailed("Public key not found.")
 
         payload = jose_jwt.decode(
-            token,
-            key,
-            algorithms=["RS256"],
-            options={"verify_aud": False},  # Clerk tokens don't include aud by default
+        token,
+        key,
+        algorithms=["RS256"],
+        options={"verify_aud": False},
+        leeway=5  # allow 5 seconds of skew
         )
 
         user_id = payload.get("sub")
