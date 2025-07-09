@@ -76,7 +76,6 @@ class VerifyPaymentView(APIView):
                 razorpay_payment_id=payment_id,
                 razorpay_signature=signature,
                 total_amount=int(total_amount * 100),  # Assuming price is in INR, convert to paisa
-                payment_status='paid'
             )
 
             # Create OrderItems
