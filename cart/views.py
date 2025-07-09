@@ -78,6 +78,6 @@ class CartView(APIView):
         if not item_id:
             return Response({"error": "item_id is required to delete a cart item."}, status=status.HTTP_400_BAD_REQUEST)
 
-        cart_item = get_object_or_404(CartItem, id=item_id, size=size, cart=cart)
+        cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
         cart_item.delete()
         return Response({"message": "Item removed from cart."}, status=status.HTTP_204_NO_CONTENT)
