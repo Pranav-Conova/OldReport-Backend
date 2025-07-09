@@ -96,7 +96,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5174",
     "http://localhost:5173",
     "https://1f5r2cmw-8000.inc1.devtunnels.ms",
-    "https://old-report-client.onrender.com/",
+    "https://old-report-client.onrender.com",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = list(default_headers) + [
