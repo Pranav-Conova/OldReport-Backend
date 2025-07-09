@@ -10,13 +10,19 @@ from cart.models import Cart, CartItem
 from api.models import Address
 from api.permissions import IsManagerOrReadOnly
 from . import permissions as p
+from api.models import Address
+from django.core.exceptions import ObjectDoesNotExist
 
 class CreateOrderView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        amount = request.data.get("amount")
         user = request.user
+        try:
+            address = Address.objects.get(user=user)
+        except Address.DoesNotExist:
+            return Response({"detail": "Address not found for user."}, status=404)
+        amount = request.data.get("amount")
         cart = Cart.objects.get(user=user)
         cart_items = CartItem.objects.filter(cart=cart)
         total_amount = sum(item.product_id.price * item.quantity for item in cart_items)
