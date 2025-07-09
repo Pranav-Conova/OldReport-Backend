@@ -14,6 +14,9 @@ class CreateOrderView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        address = request.user.address
+        if not address:
+            return Response({"error": "Address not found"}, status=status.HTTP_400_BAD_REQUEST)
         amount = request.data.get("amount")
         user = request.user
         cart = Cart.objects.get(user=user)
