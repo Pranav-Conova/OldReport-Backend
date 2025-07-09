@@ -70,7 +70,7 @@ class CartView(APIView):
         serializer = CartItemSerializer(cart_item)
         return Response(serializer.data)
 
-def delete(self, request):
+    def delete(self, request):
         cart = self.get_cart(request.user)
         item_id = request.data.get("item_id")
         size = request.data.get("size")
