@@ -8,7 +8,8 @@ import hashlib
 from .models import Order, OrderItem
 from cart.models import Cart, CartItem
 from api.models import Address
-from .permission import IsManager
+from api.permissions import IsManagerOrReadOnly
+from . import permissions as p
 
 class CreateOrderView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -116,7 +117,7 @@ class OrderListView(APIView):
         return Response(order_data, status=status.HTTP_200_OK)
 
 class allOrdersView(APIView):
-    permission_classes = [permissions.IsManager]
+    permission_classes = [p.IsManager]
 
     def get(self, request):
         orders = Order.objects.all()
