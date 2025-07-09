@@ -19,7 +19,8 @@ class CreateOrderView(APIView):
         cart = Cart.objects.get(user=user)
         cart_items = CartItem.objects.filter(cart=cart)
         total_amount = sum(item.product_id.price * item.quantity for item in cart_items)
-        if not amount or int(amount) != total_amount:
+        print(f"Total amount calculated: {total_amount}")
+        if not amount or int(amount) != int(total_amount):
             return Response({"error": "Invalid amount"}, status=status.HTTP_400_BAD_REQUEST)
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
