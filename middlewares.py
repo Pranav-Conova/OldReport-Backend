@@ -12,6 +12,7 @@ from jwt import PyJWKClient
 from api.models import CustomUser as User
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
+from jose.exceptions import ExpiredSignatureError, JWTError
 
 env = environ.Env()
 
@@ -56,20 +57,24 @@ class JWTAuthenticationMiddleware(BaseAuthentication):
         if not key:
             raise AuthenticationFailed("Public key not found.")
 
-        payload = jose_jwt.decode(
-        token,
-        key,
-        algorithms=["RS256"],
-        options={"verify_aud": False},
-        leeway=5  # allow 5 seconds of skew
-        )
+        try:
+            payload = jose_jwt.decode(
+                token,
+                key,
+                algorithms=["RS256"],
+                options={"verify_aud": False},  # Clerk tokens don't include aud by default
+            )
+        except ExpiredSignatureError:
+            raise AuthenticationFailed("JWT token has expired.")
+        except JWTError:
+            raise AuthenticationFailed("Invalid JWT token.")
 
         user_id = payload.get("sub")
         if user_id:
             user, _ = User.objects.get_or_create(username=user_id)
             return user
-        return None
 
+        raise AuthenticationFailed("User ID not found in token.")
 
 class ClerkSDK:
     def fetch_user_info(self, user_id: str):
