@@ -128,6 +128,18 @@ class allOrdersView(APIView):
             order_data.append({
                 "id": order.id,
                 "user": order.user.email,
+                "phone": order.user.address.phone_number,
+                "address": 
+                    {
+                        "first_name": order.user.address.first_name,
+                        "last_name": order.user.address.Last_name,
+                        "address_line1": order.user.address.address_line1,
+                        "street": order.user.address.street,
+                        "city": order.user.address.city,
+                        "state": order.user.address.state,
+                        "postal_code": order.user.address.postal_code,
+                        "phone": order.user.address.phone_number
+                    },
                 "total_amount": order.total_amount,
                 "delivery_status": order.delivery_status,
                 "created_at": order.created_at,
@@ -136,7 +148,7 @@ class allOrdersView(APIView):
                         "product": item.product.name,
                         "size": item.size,
                         "quantity": item.quantity,
-                        "price": item.price
+                        "image": request.build_absolute_uri(item.product.images.first().image.url)
                     } for item in order.items.all()
                 ]
             })
