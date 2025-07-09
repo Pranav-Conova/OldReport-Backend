@@ -94,6 +94,7 @@ DATABASES = {
 # Remove or comment out CORS_ALLOWED_ORIGINS
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5174",
+    "http://localhost:5173",
     "https://1f5r2cmw-8000.inc1.devtunnels.ms",
 ]
 CORS_ALLOW_CREDENTIALS = True
