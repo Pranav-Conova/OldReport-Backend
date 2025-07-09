@@ -32,22 +32,16 @@ class UserAddressView(APIView):
     def post(self, request):
         try:
             address = request.user.address
-            return Response({"detail": "Address already exists."}, status=status.HTTP_400_BAD_REQUEST)
+            # If address exists, update it
+            serializer = AddressSerializer(address, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save(user=request.user)
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Address.DoesNotExist:
+            # If address does not exist, create it
             serializer = AddressSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save(user=request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request):
-        try:
-            address = request.user.address
-        except Address.DoesNotExist:
-            return Response({"detail": "Address does not exist."}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = AddressSerializer(address, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
