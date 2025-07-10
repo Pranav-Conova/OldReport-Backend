@@ -17,6 +17,7 @@ class CreateOrderView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        
         user = request.user
         try:
             address = Address.objects.get(user=user)
@@ -26,9 +27,23 @@ class CreateOrderView(APIView):
         cart = Cart.objects.get(user=user)
         cart_items = CartItem.objects.filter(cart=cart)
         total_amount = sum(item.product_id.price * item.quantity for item in cart_items)
-        print(f"Total amount calculated: {total_amount}")
         if not amount or int(amount) != int(total_amount):
             return Response({"error": "Invalid amount"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        for item in cart_items:
+            try:
+                stock = item.product_id.stock_details.get(size=item.size)
+                if stock.quantity < item.quantity:
+                    return Response(
+                        {"error": f"Insufficient stock for {item.product_id.name} ({item.size})"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            except Exception:
+                return Response(
+                    {"error": f"Stock entry not found for {item.product_id.name} ({item.size})"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
         order = client.order.create({
@@ -40,7 +55,10 @@ class CreateOrderView(APIView):
         return Response({
             "order_id": order["id"],
             "razorpay_key": settings.RAZORPAY_KEY_ID,
-            "amount": order["amount"]
+            "amount": order["amount"],
+            "name": f"{user.address.first_name} {user.address.Last_name}",
+            "email": user.email,
+            "phone": user.address.phone_number,
         })
 
 
@@ -58,7 +76,7 @@ class VerifyPaymentView(APIView):
             f"{order_id}|{payment_id}".encode(),
             hashlib.sha256
         ).hexdigest()
-
+        
         if generated_signature == signature:
             user = request.user
             cart = Cart.objects.get(user=user)
@@ -78,6 +96,8 @@ class VerifyPaymentView(APIView):
                 total_amount=int(total_amount * 100),  # Assuming price is in INR, convert to paisa
             )
 
+            
+            
             # Create OrderItems
             for item in cart_items:
                 OrderItem.objects.create(
@@ -87,6 +107,17 @@ class VerifyPaymentView(APIView):
                     quantity=item.quantity,
                     price=int(item.product_id.price * 100)  # Store price at time of order in paisa
                 )
+
+                # Update stock
+                try:
+                    stock = item.product_id.stock_details.get(size=item.size)
+                    if stock.quantity >= item.quantity:
+                        stock.quantity -= item.quantity
+                        stock.save()
+                    else:
+                        return Response({"error": f"Insufficient stock for {item.product_id.name} ({item.size})"}, status=status.HTTP_400_BAD_REQUEST)
+                except Exception:
+                    return Response({"error": f"Stock entry not found for {item.product_id.name} ({item.size})"}, status=status.HTTP_400_BAD_REQUEST)
 
             # Clear the cart
             cart_items.delete()
@@ -107,12 +138,22 @@ class OrderListView(APIView):
                 "total_amount": order.total_amount,
                 "delivery_status": order.delivery_status,
                 "created_at": order.created_at,
+                "address": {
+                    "first_name": order.user.address.first_name,
+                    "last_name": order.user.address.Last_name,
+                    "address_line1": order.user.address.address_line1,
+                    "street": order.user.address.street,
+                    "city": order.user.address.city,
+                    "state": order.user.address.state,
+                    "postal_code": order.user.address.postal_code,
+                    "phone": order.user.address.phone_number
+                },
                 "items": [
                     {
                         "product": item.product.name,
                         "size": item.size,
                         "quantity": item.quantity,
-                        "price": item.price
+                        "image": request.build_absolute_uri(item.product.images.first().image.url)
                     } for item in order.items.all()
                 ]
             })
