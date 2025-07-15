@@ -31,11 +31,13 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = [
-    ".onrender.com",
-    "localhost",
-    "127.0.0.1",
-    "*",
-    "1f5r2cmw-8000.inc1.devtunnels.ms",
+    ".onrender.com"
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://oldreport-backend.onrender.com",
+    "https://old-report-client.onrender.com",
+    "https://old-report-admin.onrender.com",
 ]
 
 
