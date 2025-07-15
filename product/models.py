@@ -1,17 +1,17 @@
 from django.db import models
 
+
 class Product(models.Model):
     CATEGORY_CHOICES = [
-        ('Men', 'Men'),
-        ('Women', 'Women'),
-        ('Kids', 'Kids'),
+        ("Men", "Men"),
+        ("Women", "Women"),
+        ("Kids", "Kids"),
     ]
 
     SUBCATEGORY_CHOICES = [
-        ('Topwear', 'Topwear'),
-        ('Bottomwear', 'Bottomwear'),
+        ("Topwear", "Topwear"),
+        ("Bottomwear", "Bottomwear"),
     ]
-
 
     name = models.CharField(max_length=255)
     description = models.TextField()
@@ -27,8 +27,10 @@ class Product(models.Model):
 
 
 class ProductImage(models.Model):
-    product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='product_images/')
+    product = models.ForeignKey(
+        Product, related_name="images", on_delete=models.CASCADE
+    )
+    image = models.ImageField(upload_to="product_images/")
 
     def __str__(self):
         return f"Image for {self.product.name}"
@@ -36,18 +38,33 @@ class ProductImage(models.Model):
 
 class ProductStock(models.Model):
     SIZE_CHOICES = [
-        ('S', 'Small'),
-        ('M', 'Medium'),
-        ('L', 'Large'),
-        ('XL', 'Extra Large'),
+        ("S", "Small"),
+        ("M", "Medium"),
+        ("L", "Large"),
+        ("XL", "Extra Large"),
     ]
-    
-    product = models.ForeignKey(Product, related_name='stock_details', on_delete=models.CASCADE)
+
+    product = models.ForeignKey(
+        Product, related_name="stock_details", on_delete=models.CASCADE
+    )
     size = models.CharField(max_length=2, choices=SIZE_CHOICES)
     quantity = models.PositiveIntegerField(default=0)
 
     class Meta:
-        unique_together = ('product', 'size')  # Prevent duplicate entries
+        unique_together = ("product", "size")  # Prevent duplicate entries
 
     def __str__(self):
         return f"{self.product.name} - {self.size}: {self.quantity}"
+
+    def delete(self, *args, **kwargs):
+        # Remove product from all carts
+        from cart.models import CartItem
+
+        CartItem.objects.filter(product_id=self).delete()
+
+        # Remove product from all orders
+        from orderItem.models import OrderItem
+
+        OrderItem.objects.filter(product=self).delete()
+
+        super().delete(*args, **kwargs)
