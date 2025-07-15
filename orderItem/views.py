@@ -29,7 +29,7 @@ class CreateOrderView(APIView):
         total_amount = sum(item.product_id.price * item.quantity for item in cart_items)
         if not amount or int(amount) != int(total_amount):
             return Response({"error": "Invalid amount"}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         for item in cart_items:
             try:
                 stock = item.product_id.stock_details.get(size=item.size)
