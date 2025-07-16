@@ -16,6 +16,13 @@ class CartView(APIView):
 
     def get(self, request):
         cart = self.get_cart(request.user)
+        # Remove items for products that are not shown
+        removed = False
+        for item in list(cart.items.all()):
+            if not item.product_id.show:
+                item.delete()
+                removed = True
+
         # Check and update cart items if stock is less than cart quantity
         updated = False
         for item in cart.items.all():
@@ -33,6 +40,10 @@ class CartView(APIView):
         if updated:
             response_data["warning"] = (
                 "Some cart items were updated due to limited stock."
+            )
+        if removed:
+            response_data["removed"] = (
+                "Some items were removed because the product is no longer available."
             )
         return Response(response_data)
 

@@ -19,7 +19,7 @@ class Product(models.Model):
 
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES)
     subcategory = models.CharField(max_length=20, choices=SUBCATEGORY_CHOICES)
-
+    show = models.BooleanField(default=True)
     bestseller = models.BooleanField(default=False)
 
     def __str__(self):
