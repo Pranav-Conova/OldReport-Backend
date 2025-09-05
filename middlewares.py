@@ -62,7 +62,9 @@ class JWTAuthenticationMiddleware(BaseAuthentication):
                 token,
                 key,
                 algorithms=["RS256"],
-                options={"verify_aud": False},  # Clerk tokens don't include aud by default
+                options={
+                    "verify_aud": False
+                },  # Clerk tokens don't include aud by default
             )
         except ExpiredSignatureError:
             raise AuthenticationFailed("JWT token has expired.")
@@ -75,6 +77,7 @@ class JWTAuthenticationMiddleware(BaseAuthentication):
             return user
 
         raise AuthenticationFailed("User ID not found in token.")
+
 
 class ClerkSDK:
     def fetch_user_info(self, user_id: str):
@@ -99,3 +102,31 @@ class ClerkSDK:
                 "last_name": "",
                 "last_login": None,
             }, False
+
+
+class QueryCountMiddleware:
+    """Adds X-Query-Count header in DEBUG and logs high query counts to help detect N+1 issues."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from django.conf import settings
+        from django.db import connection
+
+        if not getattr(settings, "DEBUG", False):
+            return self.get_response(request)
+
+        start = len(connection.queries)
+        response = self.get_response(request)
+        total = len(connection.queries) - start
+        try:
+            response["X-Query-Count"] = str(total)
+        except Exception:
+            # Non-standard responses may not support headers
+            pass
+        if total > 50:
+            print(
+                f"[QueryCountMiddleware] {request.method} {request.path} -> {total} queries (possible N+1)"
+            )
+        return response

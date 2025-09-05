@@ -52,6 +52,9 @@ class ProductStock(models.Model):
 
     class Meta:
         unique_together = ("product", "size")  # Prevent duplicate entries
+        indexes = [
+            models.Index(fields=["product", "size"]),
+        ]
 
     def __str__(self):
         return f"{self.product.name} - {self.size}: {self.quantity}"
@@ -60,11 +63,12 @@ class ProductStock(models.Model):
         # Remove product from all carts
         from cart.models import CartItem
 
-        CartItem.objects.filter(product_id=self).delete()
+        # CartItem.product_id points to Product, not ProductStock
+        CartItem.objects.filter(product_id=self.product).delete()
 
         # Remove product from all orders
         from orderItem.models import OrderItem
 
-        OrderItem.objects.filter(product=self).delete()
+        OrderItem.objects.filter(product=self.product).delete()
 
         super().delete(*args, **kwargs)

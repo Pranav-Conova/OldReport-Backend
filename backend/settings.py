@@ -31,13 +31,17 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = [
-    ".onrender.com"
+    ".onrender.com",
+    "127.0.0.1",
+    "100.85.144.47",
+    "4bdf1c9c083c.ngrok-free.app",  # Added ngrok domain
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://oldreport-backend.onrender.com",
     "https://old-report-client.onrender.com",
     "https://old-report-admin.onrender.com",
+    "https://4bdf1c9c083c.ngrok-free.app",  # Added ngrok domain
 ]
 
 
@@ -92,14 +96,20 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": env("POSTGRES_DB"),  # Database name from .env
+#         "USER": env("POSTGRES_USER"),  # Database user from .env
+#         "PASSWORD": env("POSTGRES_PASSWORD"),  # Database password from .env
+#         "HOST": env("POSTGRES_HOST"),  # Database host
+#         "PORT": env("POSTGRES_PORT"),  # Database port
+#     }
+# }
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB"),  # Database name from .env
-        "USER": env("POSTGRES_USER"),  # Database user from .env
-        "PASSWORD": env("POSTGRES_PASSWORD"),  # Database password from .env
-        "HOST": env("POSTGRES_HOST"),  # Database host
-        "PORT": env("POSTGRES_PORT"),  # Database port
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 # CORS_ALLOW_ALL_ORIGINS = True
@@ -178,3 +188,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 RAZORPAY_KEY_ID = env("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = env("RAZORPAY_KEY_SECRET")
+
+# Enable query count middleware only in DEBUG
+if DEBUG:
+    MIDDLEWARE.append("middlewares.QueryCountMiddleware")
