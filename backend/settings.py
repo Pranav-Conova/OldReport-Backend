@@ -172,8 +172,46 @@ USE_I18N = True
 USE_TZ = True
 
 
+# Local media (default)
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# -- Optional: store uploaded media on Amazon S3 --
+# Set USE_S3=True in your .env to enable S3-backed media storage.
+USE_S3 = env.bool("USE_S3", default=False)
+
+if USE_S3:
+    # Add django-storages app when using S3
+    INSTALLED_APPS.append("storages")
+
+    # Required AWS credentials and bucket name (populate in .env)
+    AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
+
+    # Optional settings
+    AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default=None)
+    AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN", default=None)
+    AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default=None)  # for S3-compatible providers or custom endpoints
+    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+
+    # Recommended: don't let django-storages set public ACLs by default
+    AWS_DEFAULT_ACL = None
+    AWS_S3_FILE_OVERWRITE = False
+
+    # Use django-storages S3 backend for media files
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+    # Construct MEDIA_URL from provided settings (prefer custom domain)
+    if AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+    elif AWS_S3_ENDPOINT_URL:
+        # Endpoint URL already contains scheme and host; include bucket
+        MEDIA_URL = f"{AWS_S3_ENDPOINT_URL.rstrip('/')}/{AWS_STORAGE_BUCKET_NAME}/"
+    elif AWS_S3_REGION_NAME:
+        MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
+    else:
+        MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
