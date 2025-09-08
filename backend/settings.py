@@ -101,7 +101,8 @@ DATABASES = {
         "USER": env("POSTGRES_USER"),  # Database user from .env
         "PASSWORD": env("POSTGRES_PASSWORD"),  # Database password from .env
         "HOST": env("POSTGRES_HOST"),  # Database host
-        "PORT": env("POSTGRES_PORT"),  # Database port
+        "PORT": env("POSTGRES_PORT"),
+        "CONN_MAX_AGE": env.int("POSTGRES_CONN_MAX_AGE", default=600)  # Database connection max age
     }
 }
 
