@@ -30,19 +30,17 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = [
-    ".onrender.com",
-    "127.0.0.1",
-    "100.85.144.47",
-    "4bdf1c9c083c.ngrok-free.app",  # Added ngrok domain
-]
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[".onrender.com", "127.0.0.1"])
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://oldreport-backend.onrender.com",
-    "https://old-report-client.onrender.com",
-    "https://old-report-admin.onrender.com",
-    "https://4bdf1c9c083c.ngrok-free.app",  # Added ngrok domain
-]
+# Trust lists: prefer values from environment (comma-separated), fall back to safe defaults
+CSRF_TRUSTED_ORIGINS = env.list(
+    "CSRF_TRUSTED_ORIGINS",
+    default=[
+        "https://oldreport-backend.onrender.com",
+        "https://old-report-client.onrender.com",
+        "https://old-report-admin.onrender.com",
+    ],
+)
 
 
 # Application definition
@@ -96,43 +94,31 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": env("POSTGRES_DB"),  # Database name from .env
-#         "USER": env("POSTGRES_USER"),  # Database user from .env
-#         "PASSWORD": env("POSTGRES_PASSWORD"),  # Database password from .env
-#         "HOST": env("POSTGRES_HOST"),  # Database host
-#         "PORT": env("POSTGRES_PORT"),  # Database port
-#     }
-# }
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("POSTGRES_DB"),  # Database name from .env
+        "USER": env("POSTGRES_USER"),  # Database user from .env
+        "PASSWORD": env("POSTGRES_PASSWORD"),  # Database password from .env
+        "HOST": env("POSTGRES_HOST"),  # Database host
+        "PORT": env("POSTGRES_PORT"),  # Database port
     }
 }
-# CORS_ALLOW_ALL_ORIGINS = True
-# Remove or comment out CORS_ALLOWED_ORIGINS
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5174",
-    "http://localhost:5173",
-    "https://1f5r2cmw-8000.inc1.devtunnels.ms",
-    "https://old-report-client.onrender.com",
-    "https://old-report-admin.onrender.com",
-]
+
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=[
+        "http://localhost:5174",
+        "http://localhost:5173",
+        "https://old-report-client.onrender.com",
+        "https://old-report-admin.onrender.com",
+    ],
+)
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "authorization",
 ]
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",     # React or frontend dev server
-#     "https://your-frontend.com", # your deployed frontend
-# ]
 
-
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -192,7 +178,9 @@ if USE_S3:
     # Optional settings
     AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default=None)
     AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN", default=None)
-    AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default=None)  # for S3-compatible providers or custom endpoints
+    AWS_S3_ENDPOINT_URL = env(
+        "AWS_S3_ENDPOINT_URL", default=None
+    )  # for S3-compatible providers or custom endpoints
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
 
     # Recommended: don't let django-storages set public ACLs by default
@@ -200,7 +188,14 @@ if USE_S3:
     AWS_S3_FILE_OVERWRITE = False
 
     # Use django-storages S3 backend for media files
-    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 
     # Construct MEDIA_URL from provided settings (prefer custom domain)
     if AWS_S3_CUSTOM_DOMAIN:
@@ -209,7 +204,9 @@ if USE_S3:
         # Endpoint URL already contains scheme and host; include bucket
         MEDIA_URL = f"{AWS_S3_ENDPOINT_URL.rstrip('/')}/{AWS_STORAGE_BUCKET_NAME}/"
     elif AWS_S3_REGION_NAME:
-        MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
+        MEDIA_URL = (
+            f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
+        )
     else:
         MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
 
