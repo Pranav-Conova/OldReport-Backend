@@ -190,6 +190,8 @@ class OrderListView(APIView):
                     "id": order.id,
                     "total_amount": order.total_amount,
                     "delivery_status": order.delivery_status,
+                    "razorpay_order_id": order.razorpay_order_id,
+                    "razorpay_payment_id": order.razorpay_payment_id,
                     "created_at": order.created_at,
                     "address": {
                         "first_name": order.user.address.first_name,
