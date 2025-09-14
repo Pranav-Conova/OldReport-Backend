@@ -250,6 +250,8 @@ class allOrdersView(APIView):
                         "phone": order.user.address.phone_number,
                     },
                     "total_amount": order.total_amount,
+                    "razorpay_order_id": order.razorpay_order_id,
+                    "razorpay_payment_id": order.razorpay_payment_id,
                     "delivery_status": order.delivery_status,
                     "created_at": order.created_at,
                     "items": [
