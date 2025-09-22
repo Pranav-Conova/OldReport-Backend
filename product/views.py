@@ -6,6 +6,10 @@ from .serializers import ProductSerializer
 from api.permissions import IsManagerOrReadOnly
 import json
 from .models import Product, ProductImage, ProductStock
+from PIL import Image
+from django.core.files.base import ContentFile
+import io
+import os
 
 
 class ProductListCreateView(APIView):
@@ -46,11 +50,33 @@ class ProductListCreateView(APIView):
                 product=product, size=stock["size"], quantity=stock["quantity"]
             )
 
-        # Create ProductImage entries
+        # Create ProductImage entries with WebP conversion
         for image in images:
-            ProductImage.objects.create(product=product, image=image)
+            webp_image = self.convert_to_webp(image)
+            ProductImage.objects.create(product=product, image=webp_image)
 
         return Response("created", status=status.HTTP_201_CREATED)
+
+    def convert_to_webp(self, image_file):
+        # Open the image
+        img = Image.open(image_file)
+        
+        # Convert to RGB if necessary
+        if img.mode in ('RGBA', 'LA', 'P'):
+            img = img.convert('RGB')
+        
+        # Create a BytesIO buffer
+        buffer = io.BytesIO()
+        
+        # Save as WebP
+        img.save(buffer, format='WEBP', quality=85, optimize=True)
+        buffer.seek(0)
+        
+        # Generate new filename
+        original_name = os.path.splitext(image_file.name)[0]
+        webp_filename = f"{original_name}.webp"
+        
+        return ContentFile(buffer.getvalue(), name=webp_filename)
 
 
 class ProductDetailView(APIView):
