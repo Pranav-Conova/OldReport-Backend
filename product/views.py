@@ -53,7 +53,7 @@ class ProductListCreateView(APIView):
         # Create ProductImage entries with WebP conversion
         for image in images:
             webp_image = self.convert_to_webp(image)
-            ProductImage.objects.create(product=product, image=image)
+            ProductImage.objects.create(product=product, image=webp_image)
 
         return Response("created", status=status.HTTP_201_CREATED)
 
