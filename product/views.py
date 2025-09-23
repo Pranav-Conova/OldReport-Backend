@@ -6,7 +6,7 @@ from .serializers import ProductSerializer
 from api.permissions import IsManagerOrReadOnly
 import json
 from .models import Product, ProductImage, ProductStock
-from PIL import Image
+from PIL import Image, ImageOps
 from django.core.files.base import ContentFile
 import io
 import os
@@ -53,7 +53,7 @@ class ProductListCreateView(APIView):
         # Create ProductImage entries with WebP conversion
         for image in images:
             webp_image = self.convert_to_webp(image)
-            ProductImage.objects.create(product=product, image=webp_image)
+            ProductImage.objects.create(product=product, image=image)
 
         return Response("created", status=status.HTTP_201_CREATED)
 
@@ -61,20 +61,8 @@ class ProductListCreateView(APIView):
         # Open the image
         img = Image.open(image_file)
         
-        # Fix orientation based on EXIF data
-        try:
-            from PIL.ExifTags import ORIENTATION
-            exif = img._getexif()
-            if exif is not None:
-                orientation = exif.get(0x0112)  # ORIENTATION tag
-                if orientation == 3:
-                    img = img.rotate(180, expand=True)
-                elif orientation == 6:
-                    img = img.rotate(270, expand=True)
-                elif orientation == 8:
-                    img = img.rotate(90, expand=True)
-        except (AttributeError, KeyError, TypeError):
-            pass
+        # Apply EXIF orientation (works for HEIC and all formats)
+        img = ImageOps.exif_transpose(img)
         
         # Convert to RGB if necessary
         if img.mode in ('RGBA', 'LA', 'P'):
