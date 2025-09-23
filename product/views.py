@@ -61,6 +61,21 @@ class ProductListCreateView(APIView):
         # Open the image
         img = Image.open(image_file)
         
+        # Fix orientation based on EXIF data
+        try:
+            from PIL.ExifTags import ORIENTATION
+            exif = img._getexif()
+            if exif is not None:
+                orientation = exif.get(0x0112)  # ORIENTATION tag
+                if orientation == 3:
+                    img = img.rotate(180, expand=True)
+                elif orientation == 6:
+                    img = img.rotate(270, expand=True)
+                elif orientation == 8:
+                    img = img.rotate(90, expand=True)
+        except (AttributeError, KeyError, TypeError):
+            pass
+        
         # Convert to RGB if necessary
         if img.mode in ('RGBA', 'LA', 'P'):
             img = img.convert('RGB')
