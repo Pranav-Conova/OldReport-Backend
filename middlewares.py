@@ -19,7 +19,7 @@ from jose.exceptions import ExpiredSignatureError, JWTError
 env = environ.Env()
 
 CLERK_API_URL = "https://api.clerk.com/v1"
-CLERK_FRONTEND_API_URL = env("CLERK_FRONTEND_API_URL").rstrip("/")
+CLERK_FRONTEND_API_URL = env("CLERK_FRONTEND_API_URL")
 CLERK_SECRET_KEY = env("CLERK_SECRET_KEY")
 
 # JWKS cache
